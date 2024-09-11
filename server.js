@@ -38,8 +38,19 @@ db.run(`
   )
 `);
 
+// Crearea tabelului pentru bloguri, dacă nu există
+db.run(`
+  CREATE TABLE IF NOT EXISTS bloguri (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    denumire TEXT,
+    cuprins TEXT,
+    data_creare TEXT,
+    youtube_link TEXT
+  )
+`);
+
 // Endpoint pentru adăugarea unui apartament
-app.post('/apartamente', (req, res) => {
+app.post('/sv/apartamente', (req, res) => {
   const { denumire, descriere, pret, metri_patrati, oras, sector, poze } = req.body;
 
   if (!denumire || !descriere || !pret || !metri_patrati || !oras || !sector || !poze) {
@@ -58,7 +69,7 @@ app.post('/apartamente', (req, res) => {
 });
 
 // Endpoint pentru extragerea tuturor apartamentelor
-app.get('/apartamente', (req, res) => {
+app.get('/sv/apartamente', (req, res) => {
   const query = `SELECT * FROM imobile`;
 
   db.all(query, [], (err, rows) => {
@@ -75,7 +86,7 @@ app.get('/apartamente', (req, res) => {
 });
 
 // Endpoint pentru modificarea unui apartament
-app.put('/apartamente/:id', (req, res) => {
+app.put('/sv/apartamente/:id', (req, res) => {
   const { id } = req.params;
   const { denumire, descriere, pret, metri_patrati, oras, sector, poze } = req.body;
 
@@ -95,7 +106,7 @@ app.put('/apartamente/:id', (req, res) => {
 });
 
 // Endpoint pentru ștergerea unui apartament
-app.delete('/apartamente/:id', (req, res) => {
+app.delete('/sv/apartamente/:id', (req, res) => {
   const { id } = req.params;
 
   const query = `DELETE FROM imobile WHERE id = ?`;
@@ -108,6 +119,75 @@ app.delete('/apartamente/:id', (req, res) => {
       return res.status(404).json({ message: 'Apartament nu a fost găsit' });
     }
     res.status(200).json({ message: 'Apartament șters cu succes' });
+  });
+});
+
+// Endpoint pentru adăugarea unui blog
+app.post('/sv/bloguri', (req, res) => {
+  const { denumire, cuprins, youtube_link } = req.body;
+
+  if (!denumire || !cuprins || !youtube_link) {
+    return res.status(400).json({ message: 'Toate câmpurile sunt necesare' });
+  }
+
+  const data_creare = new Date().toISOString();
+  const query = `INSERT INTO bloguri (denumire, cuprins, data_creare, youtube_link) 
+                 VALUES (?, ?, ?, ?)`;
+
+  db.run(query, [denumire, cuprins, data_creare, youtube_link], function (err) {
+    if (err) {
+      return res.status(500).json({ message: 'Eroare la adăugarea blogului' });
+    }
+    res.status(201).json({ message: 'Blog adăugat cu succes', id: this.lastID });
+  });
+});
+
+// Endpoint pentru extragerea tuturor blogurilor
+app.get('/sv/bloguri', (req, res) => {
+  const query = `SELECT * FROM bloguri`;
+
+  db.all(query, [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ message: 'Eroare la extragerea blogurilor' });
+    }
+    res.status(200).json(rows);
+  });
+});
+
+// Endpoint pentru modificarea unui blog
+app.put('/sv/bloguri/:id', (req, res) => {
+  const { id } = req.params;
+  const { denumire, cuprins, youtube_link } = req.body;
+
+  const query = `UPDATE bloguri SET 
+                 denumire = ?, cuprins = ?, youtube_link = ?
+                 WHERE id = ?`;
+
+  db.run(query, [denumire, cuprins, youtube_link, id], function (err) {
+    if (err) {
+      return res.status(500).json({ message: 'Eroare la modificarea blogului' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ message: 'Blog nu a fost găsit' });
+    }
+    res.status(200).json({ message: 'Blog modificat cu succes' });
+  });
+});
+
+// Endpoint pentru ștergerea unui blog
+app.delete('/sv/bloguri/:id', (req, res) => {
+  const { id } = req.params;
+
+  const query = `DELETE FROM bloguri WHERE id = ?`;
+
+  db.run(query, [id], function (err) {
+    if (err) {
+      return res.status(500).json({ message: 'Eroare la ștergerea blogului' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ message: 'Blog nu a fost găsit' });
+    }
+    res.status(200).json({ message: 'Blog șters cu succes' });
   });
 });
 
