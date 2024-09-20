@@ -34,6 +34,8 @@ db.run(`
     metri_patrati INTEGER,
     oras TEXT,
     sector TEXT,
+    valuta TEXT,
+    vindut INTEGER,
     poze TEXT
   )
 `);
@@ -51,23 +53,19 @@ db.run(`
 
 // Endpoint pentru adăugarea unui apartament
 app.post('/sv/apartamente', (req, res) => {
-  const { denumire, descriere, pret, metri_patrati, oras, sector, poze } = req.body;
+  const { denumire, descriere, pret, metri_patrati, oras, sector, poze, vindut, valuta } = req.body;
 
-  if (!denumire || !descriere || !pret || !metri_patrati || !oras || !sector || !poze) {
-    return res.status(400).json({ message: 'Toate câmpurile sunt necesare' });
-  }
-
-  const query = `INSERT INTO imobile (denumire, descriere, pret, metri_patrati, oras, sector, poze) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`;
-
-  db.run(query, [denumire, descriere, pret, metri_patrati, oras, sector, JSON.stringify(poze)], function (err) {
-    if (err) {
-      return res.status(500).json({ message: 'Eroare la adăugarea apartamentului' });
-    }
-    res.status(201).json({ message: 'Apartament adăugat cu succes', id: this.lastID });
-  });
+  db.run(
+      `INSERT INTO imobile (denumire, descriere, pret, metri_patrati, oras, sector, poze, vindut, valuta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [denumire, descriere, pret, metri_patrati, oras, sector, JSON.stringify(poze), vindut, valuta],
+      function(err) {
+          if (err) {
+              return res.status(500).json({ error: err.message });
+          }
+          res.status(201).json({ id: this.lastID });
+      }
+  );
 });
-
 // Endpoint pentru extragerea tuturor apartamentelor
 app.get('/sv/apartamente', (req, res) => {
   const query = `SELECT * FROM imobile`;
@@ -88,13 +86,13 @@ app.get('/sv/apartamente', (req, res) => {
 // Endpoint pentru modificarea unui apartament
 app.put('/sv/apartamente/:id', (req, res) => {
   const { id } = req.params;
-  const { denumire, descriere, pret, metri_patrati, oras, sector, poze } = req.body;
+  const { denumire, descriere, pret, metri_patrati, oras, sector, poze,valuta,vindut } = req.body;
 
   const query = `UPDATE imobile SET 
-                 denumire = ?, descriere = ?, pret = ?, metri_patrati = ?, oras = ?, sector = ?, poze = ?
+                 denumire = ?, descriere = ?, pret = ?, metri_patrati = ?, oras = ?, sector = ?, poze = ?,valuta = ? ,vindut = ?
                  WHERE id = ?`;
 
-  db.run(query, [denumire, descriere, pret, metri_patrati, oras, sector, JSON.stringify(poze), id], function (err) {
+  db.run(query, [denumire, descriere, pret, metri_patrati, oras, sector, JSON.stringify(poze),valuta,vindut, id], function (err) {
     if (err) {
       return res.status(500).json({ message: 'Eroare la modificarea apartamentului' });
     }
